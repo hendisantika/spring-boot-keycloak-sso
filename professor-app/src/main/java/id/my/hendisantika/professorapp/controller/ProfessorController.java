@@ -29,4 +29,11 @@ public class ProfessorController {
         ModelAndView modelAndView = new ModelAndView("home");
         return modelAndView;
     }
+
+    @GetMapping("/manage-students")
+    @PreAuthorize("hasAuthority('PROFESSOR')")
+    public ModelAndView manageStudents() {
+        ModelAndView modelAndView = new ModelAndView("manage-students");
+        return modelAndView;
+    }
 }
