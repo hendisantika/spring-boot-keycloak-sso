@@ -1,5 +1,6 @@
 package id.my.hendisantika.professorapp.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.ModelAndView;
@@ -19,6 +20,13 @@ public class ProfessorController {
     @GetMapping("/contact-us")
     public ModelAndView contactUs() {
         ModelAndView modelAndView = new ModelAndView("contact-us");
+        return modelAndView;
+    }
+
+    @GetMapping("/home")
+    @PreAuthorize("hasAuthority('PROFESSOR')")
+    public ModelAndView home() {
+        ModelAndView modelAndView = new ModelAndView("home");
         return modelAndView;
     }
 }
