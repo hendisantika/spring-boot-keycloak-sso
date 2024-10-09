@@ -1,6 +1,8 @@
 package id.my.hendisantika.professorapp.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,4 +16,9 @@ import org.springframework.stereotype.Controller;
  */
 @Controller
 public class ProfessorController {
+    @GetMapping("/contact-us")
+    public ModelAndView contactUs() {
+        ModelAndView modelAndView = new ModelAndView("contact-us");
+        return modelAndView;
+    }
 }
