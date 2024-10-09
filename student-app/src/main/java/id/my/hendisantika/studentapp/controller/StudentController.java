@@ -35,4 +35,9 @@ public class StudentController {
     public ModelAndView manageStudents() {
         return new ModelAndView("manage-students");
     }
+
+    @GetMapping("/access-denied")
+    public ModelAndView accessDenied() {
+        return new ModelAndView("access-denied");
+    }
 }
