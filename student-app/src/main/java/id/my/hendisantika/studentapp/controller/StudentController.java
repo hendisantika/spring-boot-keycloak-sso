@@ -21,4 +21,8 @@ public class StudentController {
         return new ModelAndView("contact-us");
     }
 
+    @GetMapping("/home")
+    public ModelAndView home() {
+        return new ModelAndView("home");
+    }
 }
