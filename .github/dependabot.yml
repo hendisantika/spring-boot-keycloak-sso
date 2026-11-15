@@ -1,20 +1,53 @@
 version: 2
 updates:
+  # Maven dependencies for both Spring Boot applications
   - package-ecosystem: maven
-    directory: "/professor-app"
+    directories:
+      - "/professor-app"
+      - "/student-app"
     schedule:
       interval: daily
-      time: '05:00'
+      time: "05:00"
       timezone: Asia/Jakarta
     open-pull-requests-limit: 10
-  - package-ecosystem: maven
-    directory: "/student-app"
-    schedule:
-      interval: daily
-      time: '05:00'
-      timezone: Asia/Jakarta
-    open-pull-requests-limit: 10
-  - package-ecosystem: "github-actions"
+    labels:
+      - dependencies
+      - java
+    assignees:
+      - hendisantika
+    commit-message:
+      prefix: "build"
+      include: scope # => "build(deps): bump ..."
+    groups:
+      # Spring Boot parent / starters move together
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+      # Everything else: bundle minor & patch bumps into a single PR to reduce noise
+      maven-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions used in .github/workflows
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: daily
+      time: "05:00"
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github_actions
+    assignees:
+      - hendisantika
+    commit-message:
+      prefix: "ci"
+      include: scope # => "ci(deps): bump ..."
+    groups:
+      github-actions:
+        patterns:
+          - "*"
