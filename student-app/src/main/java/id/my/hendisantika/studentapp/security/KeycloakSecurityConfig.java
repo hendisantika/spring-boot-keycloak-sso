@@ -1,19 +1,14 @@
 package id.my.hendisantika.studentapp.security;
 
-import org.keycloak.adapters.KeycloakConfigResolver;
-import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
-import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
-import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,41 +20,44 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
  * Time: 11.43
  * To change this template use File | Settings | File Templates.
  */
-@KeycloakConfiguration
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class KeycloakSecurityConfig {
-    // Configuring the Keycloak authentication provider
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
-        auth.authenticationProvider(keycloakAuthenticationProvider);
-    }
 
+    /**
+     * Single Sign-On through Keycloak using standard OpenID Connect (Spring Security OAuth2 Client).
+     * Replaces the deprecated / removed Keycloak Spring adapter.
+     */
     @Bean
-    public KeycloakConfigResolver keycloakConfigResolver() {
-        return new KeycloakSpringBootConfigResolver();
-    }
-
-    @Bean
-    public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-    }
-
-    // Define the SecurityFilterChain bean to replace the WebSecurityConfigurerAdapter
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   LogoutSuccessHandler keycloakLogoutSuccessHandler) throws Exception {
         http
-                .authorizeHttpRequests()
-                .requestMatchers("/contact-us").permitAll()  // Public page
-                .anyRequest().authenticated()               // All other pages require authentication
-                .and()
-                .exceptionHandling().accessDeniedPage("/access-denied");  // Access denied page
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/contact-us", "/access-denied", "/error").permitAll()  // Public pages
+                        .anyRequest().authenticated())                                            // Everything else needs login
+                .oauth2Login(oauth2 -> oauth2.defaultSuccessUrl("/home", true))
+                .logout(logout -> logout.logoutSuccessHandler(keycloakLogoutSuccessHandler))
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"));
 
         return http.build();
     }
 
-    // Defining AuthenticationManagerBean manually (since WebSecurityConfigurerAdapter is removed)
+    /**
+     * Maps Keycloak realm roles and client roles (e.g. {@code PROFESSOR}, {@code STUDENT}) to Spring Security authorities.
+     */
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public GrantedAuthoritiesMapper keycloakAuthoritiesMapper(
+            @Value("${spring.security.oauth2.client.registration.keycloak.client-id}") String clientId) {
+        return new KeycloakAuthoritiesMapper(clientId);
+    }
+
+    /**
+     * Logs the user out from Keycloak too (RP-Initiated Logout), so the SSO session is terminated.
+     */
+    @Bean
+    public LogoutSuccessHandler keycloakLogoutSuccessHandler(@Value("${keycloak.base-url}") String keycloakBaseUrl,
+                                                             @Value("${keycloak.realm}") String realm) {
+        return new KeycloakLogoutSuccessHandler(keycloakBaseUrl, realm, "/contact-us");
     }
 }

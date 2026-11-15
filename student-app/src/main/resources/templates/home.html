@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
@@ -13,8 +13,10 @@
 <body>
 <div class="container">
     <!-- 'authetication' is provided by Spring Security, and Thymeleaf is able to retrieve it -->
-    <h2 class="form-signin-heading">Welcome <span th:text="${#authentication.getPrincipal()}"></span></h2>
-    <a href="/logout">Logout</a>
+    <h2 class="form-signin-heading">Welcome <span th:text="${#authentication.name}"></span></h2>
+    <form method="post" th:action="@{/logout}">
+        <button class="btn btn-link p-0" type="submit">Logout</button>
+    </form>
 </div>
 </body>
 </html>
